@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Icon-Generator</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #f6e3b8; color: #3b2412; padding: 16px; }
+  .icons { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+  figure { margin: 0; text-align: center; }
+  canvas { display: block; border-radius: 18%; box-shadow: 0 4px 12px rgba(0,0,0,.25); max-width: 200px; height: auto; }
+  a { display: inline-block; margin-top: 6px; font-weight: 700; }
+</style>
+</head>
+<body>
+<h1>App-Icons erzeugen</h1>
+<p>Rendert <code>icons/icon.svg</code> per Canvas in die PNG-Größen für iOS und das Manifest.
+Die PNGs per Link herunterladen und nach <code>icons/</code> legen.</p>
+<div class="icons" id="out"></div>
+<script>
+  const SIZES = [
+    { name: 'apple-touch-icon.png', size: 180, pad: 0 },
+    { name: 'icon-192.png', size: 192, pad: 0 },
+    { name: 'icon-512.png', size: 512, pad: 0 },
+    { name: 'icon-maskable-512.png', size: 512, pad: 0.1 },
+  ];
+  const load = src => new Promise((ok, fail) => { const i = new Image(); i.onload = () => ok(i); i.onerror = fail; i.src = src; });
+  const asUrl = svg => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+
+  // Maskierbares Icon: Himmel, Hügel und Wiese bleiben randlos, das Motiv
+  // wird auf 80 % verkleinert, damit es in die runde "sichere Zone" passt.
+  function maskable(svg) {
+    const sky = svg.match(/<rect width="512" height="512"[^>]*\/>/)[0];
+    const land = (svg.match(/<path d="M-20[^>]*\/>/g) || []).join('');
+    const inner = svg.slice(svg.indexOf(sky) + sky.length, svg.lastIndexOf('</svg>')).replace(/<path d="M-20[^>]*\/>/g, '');
+    return svg.slice(0, svg.indexOf(sky)) + sky + land +
+      '<g transform="translate(51.2 51.2) scale(0.8)">' + inner + '</g></svg>';
+  }
+
+  fetch('../icons/icon.svg').then(r => r.text()).then(async svg => {
+    const full = await load(asUrl(svg));
+    const mask = await load(asUrl(maskable(svg)));
+    const out = document.getElementById('out');
+    window.ICONS = {};
+    for (const s of SIZES) {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = s.size;
+      cv.getContext('2d').drawImage(s.pad ? mask : full, 0, 0, s.size, s.size);
+      const url = cv.toDataURL('image/png');
+      window.ICONS[s.name] = url;
+      const fig = document.createElement('figure');
+      fig.appendChild(cv);
+      const a = document.createElement('a');
+      a.href = url; a.download = s.name; a.textContent = s.name + ' (' + s.size + ' px)';
+      fig.appendChild(a);
+      out.appendChild(fig);
+    }
+    document.title = 'fertig';
+  });
+</script>
+</body>
+</html>

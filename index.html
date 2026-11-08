@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Campingplatz</title>
+  <meta name="description" content="Baue deinen eigenen Campingplatz – Gäste, Bewertungen und Events.">
+  <meta name="theme-color" content="#2e6b2b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Camping">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game" aria-label="Campingplatz"></canvas>
+
+  <header id="hud">
+    <div class="hud-col left">
+      <button class="pill" id="pStars" aria-label="Sterne"><i class="ic" data-icon="stars"></i><b id="vStars">0</b><small id="vTier"></small></button>
+      <button class="pill" id="pSat" aria-label="Zufriedenheit und Bedürfnisse"><i class="ic" data-icon="smile"></i><b id="vSat">–</b><span class="needs" id="needs"></span></button>
+      <div class="pill-row">
+        <button class="pill" id="pBuilders" aria-label="Bauarbeiter"><i class="ic" data-icon="hammer"></i><b id="vBuilders">–</b></button>
+        <button class="pill" id="pClock" aria-label="Tageszeit"><i class="ic" data-icon="sun"></i><b id="vClock">–</b></button>
+      </div>
+    </div>
+    <div class="hud-col right">
+      <button class="res" id="rEuro" aria-label="Euro"><i class="ic" data-icon="euro"></i><span class="res-txt"><b id="vEuro">0</b><span class="bar"><i id="bEuro"></i></span></span></button>
+      <button class="res" id="rWood" aria-label="Holz"><i class="ic" data-icon="wood"></i><span class="res-txt"><b id="vWood">0</b><span class="bar wood"><i id="bWood"></i></span></span></button>
+      <button class="res gems" id="rGems" aria-label="Gems"><i class="ic" data-icon="gems"></i><span class="res-txt"><b id="vGems">0</b></span></button>
+    </div>
+  </header>
+
+  <div id="side">
+    <button id="gift" class="gift" hidden aria-label="Tägliche Belohnung"><i class="ic" data-icon="gift"></i></button>
+    <div id="status"></div>
+  </div>
+
+  <div id="toasts" aria-live="polite"></div>
+
+  <section id="ctx" hidden></section>
+  <section id="place" hidden></section>
+
+  <nav id="nav">
+    <button data-nav="build"><i class="ic" data-icon="build"></i><span>Bauen</span></button>
+    <button data-nav="shop"><i class="ic" data-icon="shop"></i><span>Shop</span></button>
+    <button data-nav="quests"><i class="ic" data-icon="quests"></i><span>Aufträge</span><em id="questBadge" class="badge" hidden></em></button>
+    <button data-nav="settings"><i class="ic" data-icon="settings"></i><span>Optionen</span></button>
+  </nav>
+
+  <div id="sheetBg" hidden></div>
+  <section id="sheet" hidden></section>
+  <div id="modal" hidden></div>
+
+  <div id="rotate"><div><i class="ic" data-icon="build"></i><p>Bitte drehe dein iPhone ins Querformat.</p></div></div>
+  <noscript><p class="noscript">Für den Campingplatz wird JavaScript benötigt.</p></noscript>
+
+  <script src="data.js"></script>
+  <script src="game.js"></script>
+  <script src="render.js"></script>
+  <script src="art-late.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>
