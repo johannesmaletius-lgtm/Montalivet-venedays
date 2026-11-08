@@ -122,7 +122,7 @@ Faustregel: Jede Kostenstufe muss ins Lager des Rezeptionslevels passen, ab dem 
 Der Service Worker braucht `https://` oder `localhost`, deshalb einen kleinen Webserver starten:
 
 ```bash
-cd campingplatz
+cd montalivet-venedays
 python3 -m http.server 8000
 # dann im Browser: http://localhost:8000
 ```
@@ -135,12 +135,12 @@ offline und als App klappt es aber erst über HTTPS (siehe unten).
 
 ## Auf dem iPhone installieren
 
-1. Den Ordner `campingplatz/` per HTTPS veröffentlichen, z. B.:
+1. Den Repository-Ordner per HTTPS veröffentlichen, z. B.:
    - **GitHub Pages:** Im Repository unter *Settings → Pages* als Quelle den Branch wählen
      (Ordner `/root`). Das Spiel liegt dann unter
-     `https://<benutzer>.github.io/<repository>/campingplatz/`.
+     `https://<benutzer>.github.io/<repository>/`.
      Für private Repositories setzt GitHub Pages ein kostenpflichtiges Konto voraus.
-   - **Netlify Drop:** <https://app.netlify.com/drop> öffnen und den Ordner `campingplatz`
+   - **Netlify Drop:** <https://app.netlify.com/drop> öffnen und den Repository-Ordner
      ins Browserfenster ziehen – nach wenigen Sekunden gibt es eine HTTPS-Adresse.
 2. Die Adresse auf dem iPhone in **Safari** öffnen.
 3. Auf **Teilen** tippen → **Zum Home-Bildschirm** → **Hinzufügen**.
