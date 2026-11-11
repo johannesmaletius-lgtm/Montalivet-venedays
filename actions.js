@@ -294,26 +294,61 @@ const Actions = (() => {
   };
 
   /* ================= Kritiker-Besuch ================= */
+  // Immer sehr schwer, aber machbar: Der Kritiker ist streng (alle Bedürfnisse −15 %), so dass auch ein gut
+  // ausgebauter Platz nicht von allein auf 90 % kommt. Per Tipp auf den Kritiker gibt es je Bedürfnis eine
+  // Charme-Offensive (+30 %, kostet Geld). Gestartet wird nur, wenn jedes Bedürfnis ohne Mods bei >= 75 % liegt –
+  // dann reicht 0.75 − 0.15 + 0.30 = 0.90 gerade so.
+  const CRITIC = { strict: 0.15, charm: 0.3, minBase: 0.75, top: 0.895, ok: 0.7 };
+  const criticCost = () => nice(120 * rs());
+  const criticNeeds = () => { const s = Game.satisfaction(); return NEED_ORDER.filter(n => Game.needAvailable(n, Game.S.rl) && s.needs[n].demand > 0); };
+  // läuft unser „Strenger Kritiker“-Ereignis noch? (könnte theoretisch ersetzt worden sein)
+  const criticEvent = () => (cur && cur.ev && Game.S.event === cur.ev ? cur.ev : null);
   const critic = {
-    id: 'critic', title: 'Kritiker-Besuch!', hint: 'Ein Tester vom Campingführer mischt sich unter die Gäste. Halte jetzt alle Bedürfnisse oben!',
-    can: () => Game.S.rl >= 2 && Game.G.guests.length >= 3,
+    id: 'critic', title: 'Kritiker-Besuch!', hint: 'Ein strenger Tester vom Campingführer ist da – tippe ihn für eine Charme-Offensive an (kostet Geld)!',
+    can() {
+      if (Game.S.rl < 2 || Game.G.guests.length < 3 || !eventFree()) return false;
+      const s = Game.satisfaction(), list = criticNeeds();
+      return list.length > 0 && list.every(n => s.needs[n].base >= CRITIC.minBase);
+    },
     weight: () => (isNight() ? 0.5 : 1.4),
     start() {
+      if (!eventFree()) return;
       const g = pickGuest(); if (!g) return;
-      begin({ ...critic, gid: g.id, dur: 70, best: 0 });
+      const dur = 90, needs = {};
+      for (const n of NEED_ORDER) if (Game.needAvailable(n, Game.S.rl)) needs[n] = -CRITIC.strict;   // nur bekannte Bedürfnisse (Statusleiste)
+      setEvent('Strenger Kritiker', dur + 3, { needs }, null, 'clipboard');
+      begin({ ...critic, gid: g.id, dur, charmed: {}, ev: Game.S.event });
       api.toast('Ein Kritiker ist angereist – er sieht aus wie ein normaler Gast …');
     },
     update() {
       if (!Game.G.guests.some(g => g.id === cur.gid)) { const g = pickGuest(); if (g) cur.gid = g.id; }
-      const w = weakest(); cur.weak = w;
+      // Dialoge pausieren das Spiel, die Ereigniszeit läuft aber in Echtzeit weiter → Strenge mitziehen
+      const ev = criticEvent();
+      if (ev) { const until = Date.now() + (Math.max(0, cur.dur - cur.t) + 3) * 1000; if (ev.until < until) ev.until = until; }
+      cur.weak = weakest();
       if (cur.t >= cur.dur) critic.finish();
     },
     tap(x, y) {
       const g = Game.G.guests.find(q => q.id === cur.gid); if (!g) return false;
       const p = gs(g.x, g.y, 0), top = p.y - 26 * Render.cam.zoom;
       if (Math.hypot(x - p.x, ((p.y + top) / 2 - y) * 0.7) > hitR(30, 20)) return false;
-      const w = weakest(); api.play('pop');
-      api.toast(w.f >= 0.9 ? 'Der Kritiker nickt zufrieden …' : `Der Kritiker notiert: „${NEEDS[w.n].name} nur ${Math.round(w.f * 100)} %“`);
+      const w = weakest(), name = NEEDS[w.n].name, ev = criticEvent();
+      if (w.f >= CRITIC.top) { api.play('pop'); api.toast('Der Kritiker nickt zufrieden … mehr Charme braucht es gerade nicht.'); return true; }
+      if (cur.charmed[w.n] || !ev) {
+        api.play('pop');
+        api.toast(`Der Kritiker notiert: „${name} nur ${Math.round(w.f * 100)} %“ – jetzt hilft nur noch Bauen oder Ausbauen.`);
+        return true;
+      }
+      const c = criticCost();
+      if (!Game.canAfford({ euro: c })) { api.play('bad'); api.toast(`Dir fehlen ${Game.fmtNum(Math.ceil(c - Game.S.res.euro))} € für die Charme-Offensive.`); return true; }
+      Game.S.res.euro -= c; Game.emit('res');
+      ev.mods.needs[w.n] = (ev.mods.needs[w.n] || 0) + CRITIC.charm;
+      cur.charmed[w.n] = true; Game.G.sat = null;
+      cur.weak = weakest();
+      api.play('coin'); api.haptic(15);
+      spark(p.x, top - 10, 16, ['#fde68a', '#fbbf24', '#f9a8d4'], 120);
+      Render.floatText(g.x, g.y, 46, `Charme: ${name} +${Math.round(CRITIC.charm * 100)} %`, '#fde68a');
+      Render.floatText(g.x, g.y, 30, `−${Game.fmtNum(c)} €`, '#fca5a5');
       return true;
     },
     draw(c) {
@@ -327,14 +362,21 @@ const Actions = (() => {
       c.fillStyle = '#fde68a'; c.fillText('KRITIKER', p.x, y - 21.5 * z);
     },
     progress: () => 1 - Math.min(1, cur.t / cur.dur),
-    status: () => { const w = cur.weak; return w ? `Schwächstes Bedürfnis: ${NEEDS[w.n].name} ${Math.round(w.f * 100)} %` : ''; },
-    statusOk: () => !!cur.weak && cur.weak.f >= 0.9,
+    status() {
+      const w = cur.weak; if (!w) return '';
+      const head = `Schwächstes: ${NEEDS[w.n].name} ${Math.round(w.f * 100)} %`;
+      if (w.f >= CRITIC.top) return `${head} – sehr gut, halte das Niveau!`;
+      if (cur.charmed[w.n]) return `${head} – Charme verbraucht, nur Bauen/Ausbauen hilft`;
+      return `${head} · Tippe den Kritiker: Charme (${Game.fmtNum(criticCost())} €)`;
+    },
+    statusOk: () => !!cur.weak && cur.weak.f >= CRITIC.top,
     finish() {
       const w = weakest(), f = fScale();
+      clearOwnEvent();                                 // Strenge (und Charme) wirken nicht nach
       let got, text;
-      if (w.f >= 0.9) { got = reward({ stars: Math.round(20 * f), euro: nice(300 * rs()) }); text = 'Fünf Sterne! Der Kritiker schwärmt in seiner Zeitung von deinem Platz.'; }
-      else if (w.f >= 0.7) { got = reward({ stars: Math.round(8 * f) }); text = `Ordentlich, aber bei „${NEEDS[w.n].name}“ ist noch Luft nach oben.`; }
-      else { got = reward({ stars: -Math.round(6 * f) }); text = `Verrissen! „${NEEDS[w.n].name}“ war eine Katastrophe – das gibt Abzüge.`; }
+      if (w.f >= CRITIC.top) { got = reward({ stars: Math.round(20 * f), euro: nice(300 * rs()) }); text = 'Fünf Sterne! Selbst der strenge Kritiker schwärmt in seiner Zeitung von deinem Platz.'; }
+      else if (w.f >= CRITIC.ok) { got = reward({ stars: Math.round(8 * f) }); text = `Ordentlich – aber der strenge Kritiker fand bei „${NEEDS[w.n].name}“ (${Math.round(w.f * 100)} %) noch Luft nach oben.`; }
+      else { got = reward({ stars: -Math.round(6 * f) }); text = `Verrissen! „${NEEDS[w.n].name}“ lag nur bei ${Math.round(w.f * 100)} % – das gibt Abzüge.`; }
       finishWithModal('Kritiker-Urteil', 'clipboard', text, got);
       end();
     },
@@ -737,6 +779,7 @@ const Actions = (() => {
       if (cur.id === 'storm') cur.items.forEach(i => i.st === 'warn' && out.push(centerPx(i.b)));
       else if (cur.id === 'fire') cur.spots.forEach(s => s.st === 'burn' && out.push(centerPx(s.b)));
       else if (cur.id === 'raccoon' && cur.ph !== 'caught') { const p = gs(cur.x, cur.y, 0); out.push({ x: p.x, y: p.y - 10 * z }); }
+      else if (cur.id === 'critic') { const g = Game.G.guests.find(q => q.id === cur.gid); if (g) { const p = gs(g.x, g.y, 0); out.push({ x: p.x, y: p.y - 13 * z }); } }
       else if (cur.id === 'dogHide') out.push(gs(cur.spot.x, cur.spot.y, 0));
       else if (cur.id === 'fireflies') cur.list.forEach(f => !f.caught && out.push(gs(f.x, f.y, 18 + Math.sin(f.ph + clock() * 2) * 4)));
       else if (cur.id === 'walk' && cur.next < cur.pts.length) out.push(gs(cur.pts[cur.next].x, cur.pts[cur.next].y, 14));
@@ -744,5 +787,6 @@ const Actions = (() => {
       return out;
     },
     _ff(sec) { if (cur) cur.t += sec; },
+    _can(id) { const a = LIST.find(q => q.id === id); return !!(a && a.can()); },
   };
 })();
