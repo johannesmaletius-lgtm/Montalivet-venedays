@@ -23,7 +23,7 @@ const Render = (() => {
   const view = { x0: 0, y0: 0, x1: 0, y1: 0 };
   let rain = [], confetti = [], mosquitos = [], fireflies = [];
   let flash = 0, nextLightning = 0;
-  const hooks = { lightning: null };
+  const hooks = { lightning: null, overlay: null };
   const gate = { _k: 4, _d: 0 };
 
   /* ---------------- Mathe & Koordinaten ---------------- */
@@ -4156,6 +4156,7 @@ const Render = (() => {
     if (di.dark > 0.01) drawNight(di.dark, v.hideId);
     drawWeather(dt);
     drawOverlays(dt, v);
+    if (hooks.overlay) { ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; hooks.overlay(ctx, dt); }
   }
 
   /* ---------------- Trefferprüfung ---------------- */

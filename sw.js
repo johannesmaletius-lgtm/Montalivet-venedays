@@ -1,7 +1,7 @@
 /* Service Worker – macht den Campingplatz offline spielbar.
  * Strategie: Cache zuerst, im Hintergrund aktualisieren (stale-while-revalidate).
  * Bei Änderungen an den Dateien VERSION erhöhen, damit alte Caches gelöscht werden. */
-const VERSION = 'camping-v1.2.1';
+const VERSION = 'camping-v1.3.0';
 const ASSETS = [
   './',
   'index.html',
@@ -10,6 +10,7 @@ const ASSETS = [
   'game.js',
   'render.js',
   'art-late.js',
+  'actions.js',
   'ui.js',
   'manifest.json',
   'icons/icon.svg',

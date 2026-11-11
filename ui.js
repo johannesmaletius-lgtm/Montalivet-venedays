@@ -147,6 +147,7 @@ const UI = (() => {
     megaphone: '<svg viewBox="0 0 24 24"><path d="M3 10v4l3 .5L17 20V4L6 9.5z" fill="#f97316" stroke="#7c2d12" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 14.5L7.5 21h3L9.5 15" fill="#fdba74" stroke="#7c2d12" stroke-width="1.5" stroke-linejoin="round"/><path d="M20 9.5c1 .8 1 4.2 0 5" stroke="#7c2d12" stroke-width="1.6" stroke-linecap="round"/></svg>',
     rain: '<svg viewBox="0 0 24 24"><path d="M6.5 15a4.5 4.5 0 01-.3-9 6 6 0 0111.4 1.5A3.8 3.8 0 0117.5 15z" fill="#cbd5e1" stroke="#475569" stroke-width="1.5"/><path d="M8 17.5l-1 3M12 17.5l-1 3M16 17.5l-1 3" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/></svg>',
     storm: '<svg viewBox="0 0 24 24"><path d="M6.5 14a4.5 4.5 0 01-.3-9 6 6 0 0111.4 1.5A3.8 3.8 0 0117.5 14z" fill="#64748b" stroke="#1e293b" stroke-width="1.5"/><path d="M12.5 12l-3 5.5h3l-1.5 5 4.5-7h-3l1.5-3.5z" fill="#facc15" stroke="#854d0e" stroke-width="1.2" stroke-linejoin="round"/></svg>',
+    fire: '<svg viewBox="0 0 24 24"><path d="M12 2.5c1 3.5 5.5 6 5.5 11a5.5 5.5 0 01-11 0c0-2.6 1.3-4.2 2.6-5.6.2 1.8 1 2.9 2 3.4-.4-3.4.4-6.2.9-8.8z" fill="#f97316" stroke="#7c2d12" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 12.5c.9 1.4 2.4 2.4 2.4 4.3a2.4 2.4 0 01-4.8 0c0-1.5.9-2.6 2.4-4.3z" fill="#fde047"/></svg>',
     festival: '<svg viewBox="0 0 24 24"><path d="M9 18V5l11-2.5v13" fill="none" stroke="#7c3aed" stroke-width="2.2" stroke-linejoin="round"/><ellipse cx="6.5" cy="18" rx="3.2" ry="2.5" fill="#a855f7" stroke="#581c87" stroke-width="1.4"/><ellipse cx="17.5" cy="15.5" rx="3.2" ry="2.5" fill="#a855f7" stroke="#581c87" stroke-width="1.4"/><circle cx="3" cy="5" r="1.2" fill="#f43f5e"/><circle cx="21" cy="21" r="1.2" fill="#22c55e"/><rect x="13" y="20" width="2.2" height="2.2" fill="#facc15"/></svg>',
     mosquito: '<svg viewBox="0 0 24 24"><ellipse cx="9" cy="7" rx="5" ry="2.6" transform="rotate(-25 9 7)" fill="#e0f2fe" stroke="#475569" stroke-width="1.2"/><ellipse cx="15" cy="7" rx="5" ry="2.6" transform="rotate(25 15 7)" fill="#e0f2fe" stroke="#475569" stroke-width="1.2"/><ellipse cx="12" cy="13" rx="2.6" ry="5" fill="#57534e" stroke="#1c1917" stroke-width="1.2"/><circle cx="12" cy="7.5" r="2.2" fill="#292524"/><path d="M12 5.5V1.5M10 15l-5 4M14 15l5 4M10 12l-6 0M14 12h6" stroke="#1c1917" stroke-width="1.1" stroke-linecap="round"/></svg>',
     clipboard: '<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="19" rx="2" fill="#bfdbfe" stroke="#1e3a8a" stroke-width="1.6"/><rect x="8" y="1.5" width="8" height="4" rx="1.2" fill="#1e3a8a"/><path d="M8 11h8M8 15h8M8 19h5" stroke="#1e3a8a" stroke-width="1.6" stroke-linecap="round"/><path d="M15 17.5l1.5 1.5 3-3.5" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round"/></svg>',
@@ -1001,6 +1002,7 @@ const UI = (() => {
       Sound.play('tick');
       return;
     }
+    if (Actions.tap(x, y)) return;
     const pk = Render.hitPickup(x, y);
     if (pk) {
       const r = Game.collectPickup(pk.id);
@@ -1122,7 +1124,7 @@ const UI = (() => {
       const ev = EVENTS.find(e => e.id === s.event.id);
       const nm = (s.event.mods && s.event.mods.needs) || {};
       const tags = Object.keys(nm).map(n => `<em class="${nm[n] < 0 ? 'neg' : 'pos'}">${icon(n)}${nm[n] > 0 ? '+' : '−'}${Math.abs(Math.round(nm[n] * 100))}</em>`).join('');
-      html += `<div class="chip">${icon(ev ? ev.icon : 'info')}<span>${s.event.title}</span>${tags}<b>${fmtTime((s.event.until - now) / 1000)}</b></div>`;
+      html += `<div class="chip">${icon(ev ? ev.icon : (s.event.icon || 'info'))}<span>${s.event.title}</span>${tags}<b>${fmtTime((s.event.until - now) / 1000)}</b></div>`;
     }
     for (const k in s.boosts) {
       if (s.boosts[k].until <= now) continue;
@@ -1327,6 +1329,7 @@ const UI = (() => {
     const dt = Math.min(0.05, Math.max(0, (t - lastT) / 1000));
     lastT = t;
     Game.update(dt);
+    Actions.update(dt);
     // Schwung nach dem Ziehen
     if (inp.mode === 'none' && (Math.abs(inp.vx) > 0.05 || Math.abs(inp.vy) > 0.05)) {
       Render.pan(inp.vx * dt * 60, inp.vy * dt * 60);
@@ -1435,6 +1438,8 @@ const UI = (() => {
     wireGame();
     Game.init();
     Render.init(canvas);
+    Actions.init({ toast, modal, play: n => Sound.play(n), haptic, gainHtml, busy: () => !!st.modal || !!st.placing || !!st.sheet });
+    Render.hooks.overlay = c => Actions.draw(c);
     if (S().cam && isFinite(S().cam.x)) { Render.cam.x = S().cam.x; Render.cam.y = S().cam.y; Render.cam.zoom = S().cam.zoom || 1; Render.clampCam(); }
     else centerOnReception(0.85);
 

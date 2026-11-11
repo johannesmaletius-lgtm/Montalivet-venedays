@@ -16,6 +16,7 @@ data.js         CONFIG + Inhalte: Bedürfnisse, Gebäude, Gäste, Ereignisse, Au
 game.js         Game   – Spiellogik ohne Darstellung
 render.js       Render – isometrische Canvas-Grafik
 art-late.js     Grafiken der späten Gebäude und der Grundstücks-Funde (meldet sich per Render.defineArt an)
+actions.js      Actions – Action-Ereignisse (kurze Tipp-Spiele), Sternschnuppen; zeichnet über Render.hooks.overlay
 ui.js           Sound + UI – Eingabe, Menüs, Dialoge, Spielschleife, Service-Worker-Start
 sw.js           Service Worker (Offline-Cache)
 manifest.json   Web-App-Manifest
@@ -31,7 +32,7 @@ Datenfluss:
                     Game.emit('built' | 'review' | 'event' | …)
                                               ▼
             ui.js: Toasts, Dialoge, Sounds ◄──┴──► Render: Konfetti, Münzflug, Texte
- requestAnimationFrame: Game.update(dt) → Render.frame(dt, Ansicht) → HUD aktualisieren
+ requestAnimationFrame: Game.update(dt) → Actions.update(dt) → Render.frame(dt, Ansicht) → HUD aktualisieren
 ```
 
 - **Zustand:** `Game.S` ist der komplette Spielstand (Ressourcen, Gebäude, Aufträge, Erfolge,
@@ -84,6 +85,20 @@ Datenfluss:
   Besuch vom Campingverband, Reisebus, entlaufener Hund, Gewitter, Kontrolle vom Gesundheitsamt,
   Kunstmarkt, Konzertanfrage, Sportfest. Viele wirken zeitweise auf einzelne Bedürfnisse (Regen: Sport ↓),
   und passende Gebäude schalten bessere Antworten frei (z. B. Konzert auf der Freilichtbühne).
+- **Action-Ereignisse:** Zwischen den normalen Ereignissen startet ab und zu ein kurzes Reaktionsspiel
+  (Banner oben mit Hinweis und Zeitbalken; offene Dialoge und Menüs pausieren es):
+  - **Sturm:** Zelte mit Warnring antippen, bevor der Wind sie umweht.
+  - **Feuer-Alarm:** Flammen mehrmals antippen, bis sie gelöscht sind.
+  - **Waschbär:** das Tier abfangen, bevor es mit der Kasse entwischt (die Beute gibt es beim Fangen zurück).
+  - **Kritiker-Besuch:** ein markierter Gast prüft den Platz – sind beim Abschied alle Bedürfnisse
+    bei mindestens 90 %, gibt es eine große Extra-Bewertung, bei Mängeln Abzüge.
+  - **Hund verloren:** Suchspiel auf dem Platz mit „kalt/warm/heiß“, später mit markierter Gegend.
+  - Nur nachts: **Glühwürmchen** fangen, **Nachtwanderung** (Laternen der Reihe nach antippen) und das
+    **Feuerwerk-Finale** (Raketen antippen, wenn sich der Ring schließt – Konfetti, Sterne und mehr Gäste).
+  - Nebenbei ziehen nachts **Sternschnuppen** über den Himmel – antippen erfüllt einen Wunsch.
+  Nachwirkungen (z. B. Sturmschäden, Feuerwerk-Begeisterung) laufen wie normale Ereignisse über `Game.S.event`;
+  laufende Action-Spiele selbst werden nicht gespeichert. Zum Ausprobieren in der Konsole: `Actions.start('storm')`
+  (IDs: `Actions.ids`).
 - **Aufträge, Erfolge, 7-Tage-Login-Belohnung, Offline-Einnahmen (max. 8 Std.).**
 
 ## Steuerung
