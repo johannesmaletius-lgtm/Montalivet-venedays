@@ -90,8 +90,11 @@ Datenfluss:
   - **Sturm:** Zelte mit Warnring antippen, bevor der Wind sie umweht.
   - **Feuer-Alarm:** Flammen mehrmals antippen, bis sie gelöscht sind.
   - **Waschbär:** das Tier abfangen, bevor es mit der Kasse entwischt (die Beute gibt es beim Fangen zurück).
-  - **Kritiker-Besuch:** ein markierter Gast prüft den Platz – sind beim Abschied alle Bedürfnisse
-    bei mindestens 90 %, gibt es eine große Extra-Bewertung, bei Mängeln Abzüge.
+  - **Kritiker-Besuch:** ein markierter, strenger Gast prüft 90 s lang den Platz – sind beim Abschied alle
+    Bedürfnisse bei mindestens 90 %, gibt es eine große Extra-Bewertung, bei Mängeln Abzüge. Seine Strenge
+    senkt alle Bedürfnisse um 15 %; ein Tipp auf ihn startet eine Charme-Offensive (+30 % auf das schwächste
+    Bedürfnis, je Bedürfnis einmal, kostet Geld). Er kommt nur, wenn jedes Bedürfnis ohne Ereignisse ≥ 75 % hat –
+    damit ist er immer sehr schwer, aber machbar.
   - **Hund verloren:** Suchspiel auf dem Platz mit „kalt/warm/heiß“, später mit markierter Gegend.
   - Nur nachts: **Glühwürmchen** fangen, **Nachtwanderung** (Laternen der Reihe nach antippen) und das
     **Feuerwerk-Finale** (Raketen antippen, wenn sich der Ring schließt – Konfetti, Sterne und mehr Gäste).
